@@ -1,151 +1,137 @@
-# data-eng-framework
+# kafka-delta-sink
 
-# Data Engineering Framework
+Stream data from Apache Kafka to Delta Lake on Azure ADLS Gen2 — **no Spark required**.
 
-Enterprise-grade lakehouse framework implementing medallion architecture for multi-source data ingestion, processing, and consumption.
-
-## Overview
-
-This framework provides a comprehensive, scalable data engineering solution designed to handle diverse data sources, ensure data quality, and deliver business-ready datasets for analytics and AI/ML use cases.
+A lightweight Python-based sink that consumes Kafka messages and writes them as Delta Lake tables using [delta-rs](https://github.com/delta-io/delta-rs), with ACID transactions and zero JVM dependency.
 
 ## Architecture
 
 ```
-Sources → Bronze → Silver → Gold → Platinum
-          (Raw)   (Curated) (Business) (AI/ML)
-                                ↓
-                          DatabricksSql (Analytics)
-                          Neo4j (Time Series)
+┌──────────┐     ┌──────────────────┐     ┌─────────────────────────────┐
+│  Kafka   │────>│ kafka-delta-sink │────>│  Delta Lake on ADLS Gen2    │
+│  Topics  │     │  (Python)        │     │  (Parquet + Delta Log)      │
+└──────────┘     └──────────────────┘     └─────────────────────────────┘
+                   │
+                   ├─ confluent-kafka (consumer)
+                   ├─ delta-rs (writer, no Spark)
+                   └─ pyarrow (in-memory format)
 ```
 
-The framework follows a **medallion architecture** with four layers, plus specialized storage for specific workloads.
+## Features
 
-## Core Components
+- **No Spark / No JVM** — Uses delta-rs (Rust) Python bindings (~50MB vs multi-GB Spark)
+- **At-least-once delivery** — Offsets committed only after successful Delta write
+- **Configurable batching** — Flush by record count or time timeout
+- **Multiple auth methods** — Service Principal, Account Key, SAS Token, Azure CLI
+- **Schema evolution** — Supports Delta Lake schema merge
+- **JSON & Avro** — Pluggable deserializers (Avro via Confluent Schema Registry)
+- **Docker ready** — Slim container image for Kubernetes deployment
+- **Table maintenance** — Built-in OPTIMIZE and VACUUM support
 
-### 1. Ingestion Layer (Bronze)
-Ingests data from multiple sources into raw format:
-- **SAP Systems**: ECC, S4HANA tables (ACDOCA, BSEG, etc.)
-- **Databases**: SQL Server, Oracle, PostgreSQL via JDBC
-- **APIs**: REST/SOAP endpoints
-- **Event Streams**: Kafka, Azure Event Hub
-- **Files**: CSV, Parquet, JSON, Excel from blob storage
+## Quick Start
 
-### 2. Processing Layer (Silver)
-Cleanses, validates, and enriches data:
-- **Data Cleansing**: Standardization, deduplication, null handling
-- **Data Quality Framework**: Validation rules, business logic checks, anomaly detection
-- **SCD Type 2**: Automatic historical tracking for dimensions
-- **Delta Lake**: ACID transactions, time travel, change data feed
+### Install
 
-### 3. Consumption Layer (Gold)
-Business-ready, aggregated data:
-- Dimension tables with historical tracking
-- Pre-aggregated fact tables
-- Materialized views
-- Domain-specific data marts
-
-### 4. AI/ML Layer (Platinum)
-Specialized datasets for advanced analytics:
-- Feature store for ML models
-- Training and inference datasets
-- Vector embeddings
-- Real-time scoring tables
-
-### 5. Analytical Storage (DatabricksSql)
-High-performance analytical query engine for:
-- Ad-hoc exploration and analysis
-- Fast OLAP workloads
-- Data science development
-- Local testing without cluster overhead
-
-### 6. Time Series Storage (Neo4j)
-Graph-based temporal data management for:
-- Time-based relationship analysis
-- Event correlation and pattern detection
-- Audit trail and data lineage tracking
-- Complex temporal queries across entities
-
-## Key Features
-
-### Metadata-Driven Design
-All pipelines and transformations are configured via YAML files, eliminating hardcoded logic and enabling rapid changes.
-
-### Data Quality Framework
-Comprehensive validation covering completeness, validity, uniqueness, and timeliness with automated reporting and alerting.
-
-### SCD Type 2 Management
-Automatic tracking of historical changes in dimension tables with standard columns for versioning and currency.
-
-### Specialized Storage Options
-- **DatabricksSql**: Lightning-fast analytical queries on Gold layer data
-- **Neo4j**: Graph-based queries for time series and temporal relationships
-
-### Monitoring & Observability
-Built-in dashboards, alerts, and data lineage tracking through Unity Catalog.
-
-## Technology Stack
-
-- **Orchestration**: Azure Data Factory, Databricks Workflows
-- **Processing**: Apache Spark (PySpark), Delta Lake
-- **Governance**: Unity Catalog
-- **Streaming**: Kafka, Azure Event Hub
-- **Analytics**: DatabricksSql
-- **Time Series**: Neo4j
-- **Cloud**: Azure (adaptable to AWS/GCP)
-
-## Project Structure
-
-```
-data-engineering-framework/
-├── config/                       # YAML configurations
-├── ingestion/                    # Source connectors
-├── processing/                   # Silver layer transformations
-├── consumption/                  # Gold layer aggregations
-├── ml/                          # Platinum layer features
-├── orchestration/               # Pipeline definitions
-├── monitoring/                  # Dashboards and alerts
-└── tests/                       # Unit and integration tests
+```bash
+uv add kafka-delta-sink
 ```
 
-## Use Cases
+Or with pip:
+```bash
+pip install kafka-delta-sink
+```
 
-- **Enterprise Data Hub**: Centralized data platform for organization-wide analytics
-- **Real-time Analytics**: Streaming data from Kafka to business dashboards
-- **Regulatory Reporting**: SCD Type 2 for audit trails and historical compliance
-- **AI/ML Pipelines**: Feature engineering and model training datasets
-- **Exploratory Analytics**: DatabricksSql for fast data science exploration
-- **Temporal Analysis**: Neo4j for understanding time-based patterns and relationships
+For Avro support:
+```bash
+uv add 'kafka-delta-sink[avro]'
+```
 
-## Getting Started
+### Run with YAML config
 
-### Prerequisites
-- Azure Databricks (Unity Catalog enabled)
-- Azure Data Factory
-- Azure Key Vault
-- DatabricksSql installation
-- Neo4j database
-- Service Principal with appropriate permissions
+```bash
+kafka-delta-sink --config config.yaml
+```
 
-### Deployment
-Standard deployment involves configuring YAML files, deploying ADF pipelines, setting up Unity Catalog catalogs/schemas, and initializing specialized storage layers.
+### Run with environment variables
 
-## Benefits
+```bash
+export KAFKA_BOOTSTRAP_SERVERS=broker:9092
+export AZURE_ACCOUNT_NAME=mystorageaccount
+export AZURE_AUTH_METHOD=service_principal
+export AZURE_CLIENT_ID=<client-id>
+export AZURE_CLIENT_SECRET=<client-secret>
+export AZURE_TENANT_ID=<tenant-id>
+export SINK_TOPICS='["my-topic"]'
+export SINK_DELTA_TABLE_URI=abfss://container@mystorageaccount.dfs.core.windows.net/bronze/events
 
-- **Scalability**: Handles data from gigabytes to petabytes
-- **Flexibility**: Supports batch and streaming workloads
-- **Quality**: Built-in validation and monitoring
-- **Performance**: Optimized storage and query patterns
-- **Governance**: Comprehensive lineage and access control
-- **Speed**: DatabricksSql and Neo4j for specialized query patterns
+kafka-delta-sink
+```
 
-## Contributing
+### Run with Docker
 
-Follow standard Git workflow with feature branches and pull requests.
+```bash
+docker-compose up
+```
+
+## Example Config (YAML)
+
+```yaml
+kafka:
+  bootstrap_servers: "broker:9092"
+  group_id: "kafka-delta-sink"
+  auto_offset_reset: "earliest"
+
+azure:
+  account_name: "mystorageaccount"
+  auth_method: "service_principal"
+  client_id: "<client-id>"
+  client_secret: "<client-secret>"
+  tenant_id: "<tenant-id>"
+
+sink:
+  topics: ["events.clickstream"]
+  delta_table_uri: "abfss://datalake@mystorageaccount.dfs.core.windows.net/bronze/clickstream"
+  batch_size: 10000
+  batch_timeout_seconds: 30
+  partition_by: ["event_type"]
+
+schema:
+  - name: "event_id"
+    type: "string"
+  - name: "event_type"
+    type: "string"
+  - name: "payload"
+    type: "string"
+```
+
+## How It Works
+
+1. **Consume** — Polls Kafka topics using confluent-kafka
+2. **Deserialize** — Parses JSON (or Avro) messages, enriches with Kafka metadata
+3. **Buffer** — Collects records in memory until batch size or timeout is reached
+4. **Write** — Converts buffer to PyArrow Table and writes to Delta Lake via delta-rs
+5. **Commit** — Commits Kafka offsets only after successful Delta write (at-least-once)
+
+## Documentation
+
+- [Configuration Reference](docs/configuration.md)
+- [Authentication Guide](docs/authentication.md)
+
+## Development
+
+```bash
+git clone https://github.com/ritutiw/kafka-delta-sink.git
+cd kafka-delta-sink
+
+uv sync --all-extras
+
+uv run pytest
+
+uv run ruff check src/ tests/
+
+docker-compose up -d kafka azurite
+```
 
 ## License
 
-Proprietary - Internal use only
-
-## Support
-
-Contact the Data Engineering Team for questions, issues, or feature requests.
+Apache License 2.0

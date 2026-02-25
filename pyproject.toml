@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kafka-delta-sink"
+version = "0.1.0"
+description = "Stream data from Apache Kafka to Delta Lake on Azure ADLS Gen2 — no Spark required"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "Ritu Kumari", email = "ritutiw@users.noreply.github.com" },
+]
+keywords = ["kafka", "delta-lake", "adls", "azure", "streaming", "data-engineering"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "confluent-kafka>=2.3.0",
+    "deltalake>=0.17.0",
+    "pyarrow>=15.0.0",
+    "pydantic-settings>=2.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+avro = ["confluent-kafka[avro]>=2.3.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+kafka-delta-sink = "kafka_delta_sink.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ritutiw/kafka-delta-sink"
+Repository = "https://github.com/ritutiw/kafka-delta-sink"
+Issues = "https://github.com/ritutiw/kafka-delta-sink/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kafka_delta_sink"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
