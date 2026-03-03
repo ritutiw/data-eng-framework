@@ -1,70 +1,119 @@
-# kafka-delta-sink
+# Data Engineering Framework
 
-Stream data from Apache Kafka to Delta Lake on Azure ADLS Gen2 — **no Spark required**.
-
-A lightweight Python-based sink that consumes Kafka messages and writes them as Delta Lake tables using [delta-rs](https://github.com/delta-io/delta-rs), with ACID transactions and zero JVM dependency.
+Enterprise-grade lakehouse framework implementing medallion architecture for multi-source data ingestion, processing, and consumption.
 
 ## Architecture
 
 ```
-┌──────────┐     ┌──────────────────┐     ┌─────────────────────────────┐
-│  Kafka   │────>│ kafka-delta-sink │────>│  Delta Lake on ADLS Gen2    │
-│  Topics  │     │  (Python)        │     │  (Parquet + Delta Log)      │
-└──────────┘     └──────────────────┘     └─────────────────────────────┘
-                   │
-                   ├─ confluent-kafka (consumer)
-                   ├─ delta-rs (writer, no Spark)
-                   └─ pyarrow (in-memory format)
+Sources → Bronze → Silver → Gold → Platinum
+          (Raw)   (Curated) (Business) (AI/ML)
+                                ↓
+                          DatabricksSql (Analytics)
+                          Neo4j (Time Series)
 ```
 
-## Features
+```
+┌───────────────┐     ┌──────────────────────────┐     ┌──────────────────────────┐
+│  Kafka Topics │────>│                          │────>│  Delta Lake on ADLS Gen2 │
+└───────────────┘     │  data-eng-framework      │     │  (Bronze / Silver / Gold)│
+┌───────────────┐     │  (PySpark + delta-rs)    │     └──────────────────────────┘
+│  MySQL        │────>│                          │
+│  PostgreSQL   │     │  Design Patterns:        │
+│  OracleDB     │────>│  Factory, Registry,      │
+└───────────────┘     │  Strategy, Template      │
+                      └──────────────────────────┘
+```
 
-- **No Spark / No JVM** — Uses delta-rs (Rust) Python bindings (~50MB vs multi-GB Spark)
-- **At-least-once delivery** — Offsets committed only after successful Delta write
-- **Configurable batching** — Flush by record count or time timeout
-- **Multiple auth methods** — Service Principal, Account Key, SAS Token, Azure CLI
-- **Schema evolution** — Supports Delta Lake schema merge
-- **JSON & Avro** — Pluggable deserializers (Avro via Confluent Schema Registry)
-- **Docker ready** — Slim container image for Kubernetes deployment
-- **Table maintenance** — Built-in OPTIMIZE and VACUUM support
+## Technology Stack
+
+- **Orchestration**: Azure Data Factory, Databricks Workflows
+- **Processing**: Apache Spark (PySpark), Delta Lake
+- **Governance**: Unity Catalog
+- **Streaming**: Kafka, Azure Event Hub
+- **Analytics**: DatabricksSql
+- **Time Series**: Neo4j
+- **Cloud**: Azure (adaptable to AWS/GCP)
+
+## Project Structure
+
+```
+data-engineering-framework/
+├── config/                          # YAML configurations
+│   ├── kafka_sources.yaml
+│   ├── jdbc_sources.yaml
+│   └── pipeline.yaml
+├── ingestion/                       # Source connectors (Bronze)
+│   ├── base.py                      # BaseConnector (Template Method)
+│   ├── registry.py                  # ConnectorRegistry (Registry pattern)
+│   ├── factory.py                   # ConnectorFactory (Factory pattern)
+│   ├── kafka/                       # Kafka connector
+│   │   ├── connector.py
+│   │   ├── consumer.py
+│   │   └── serialization/           # JSON + Avro deserializers
+│   └── jdbc/                        # JDBC connectors (PySpark JDBC)
+│       ├── connector.py             # Strategy pattern with adapters
+│       ├── adapters.py              # MySQL, PostgreSQL, Oracle adapters
+│       └── query_builder.py
+├── processing/                      # Silver layer transformations
+│   ├── cleansing.py                 # Dedup, null handling
+│   ├── quality.py                   # Data quality validation
+│   └── scd.py                       # SCD Type 2 tracking
+├── consumption/                     # Gold layer aggregations
+│   └── aggregator.py
+├── ml/                              # Platinum layer
+│   └── feature_store.py
+├── writers/                         # Output writers
+│   └── delta_writer.py              # Delta Lake writer (delta-rs)
+├── orchestration/                   # Pipeline definitions
+│   └── pipeline.py
+├── monitoring/                      # Metrics collection
+│   └── metrics.py
+├── common/                          # Shared utilities
+│   ├── config.py                    # Pydantic settings
+│   ├── logger.py                    # Centralized logger + Application Insights
+│   ├── storage.py                   # Azure ADLS storage helpers
+│   └── transforms.py               # Flatten, rename, select
+└── tests/                           # Unit and integration tests
+```
+
+## Design Patterns
+
+| Pattern | Location | Purpose |
+|---------|----------|---------|
+| Template Method | `ingestion/base.py` | `connect()` → `extract()` → `close()` lifecycle |
+| Factory | `ingestion/factory.py` | `ConnectorFactory.create("kafka", config)` |
+| Registry | `ingestion/registry.py` | `@ConnectorRegistry.register("kafka")` decorator |
+| Strategy | `ingestion/jdbc/adapters.py` | Pluggable DB adapters (MySQL, PostgreSQL, Oracle) |
+
+## Connectors
+
+### Kafka Connector
+Primary ingestion mechanism for streaming data:
+- confluent-kafka consumer with at-least-once delivery
+- JSON and Avro deserialization (Schema Registry)
+- Configurable batching by count or timeout
+- Graceful shutdown with signal handling
+
+### JDBC Connectors (PySpark JDBC)
+Batch ingestion from relational databases:
+- **MySQL** — `com.mysql.cj.jdbc.Driver`
+- **PostgreSQL** — `org.postgresql.Driver`
+- **OracleDB** — `oracle.jdbc.OracleDriver`
+- Full and incremental loads with watermark columns
+- Parallel reads via partition column
 
 ## Quick Start
 
 ### Install
 
 ```bash
-uv add kafka-delta-sink
-```
-
-Or with pip:
-```bash
-pip install kafka-delta-sink
-```
-
-For Avro support:
-```bash
-uv add 'kafka-delta-sink[avro]'
+uv add data-engineering-framework
 ```
 
 ### Run with YAML config
 
 ```bash
-kafka-delta-sink --config config.yaml
-```
-
-### Run with environment variables
-
-```bash
-export KAFKA_BOOTSTRAP_SERVERS=broker:9092
-export AZURE_ACCOUNT_NAME=mystorageaccount
-export AZURE_AUTH_METHOD=service_principal
-export AZURE_CLIENT_ID=<client-id>
-export AZURE_CLIENT_SECRET=<client-secret>
-export AZURE_TENANT_ID=<tenant-id>
-export SINK_TOPICS='["my-topic"]'
-export SINK_DELTA_TABLE_URI=abfss://container@mystorageaccount.dfs.core.windows.net/bronze/events
-
-kafka-delta-sink
+data-eng-framework -c config/kafka_sources.yaml
 ```
 
 ### Run with Docker
@@ -73,49 +122,71 @@ kafka-delta-sink
 docker-compose up
 ```
 
-## Example Config (YAML)
+## Example Configs
 
+### Kafka Source
 ```yaml
-kafka:
+pipeline_name: kafka-clickstream-bronze
+connector_type: kafka
+
+connector:
   bootstrap_servers: "broker:9092"
-  group_id: "kafka-delta-sink"
-  auto_offset_reset: "earliest"
+  group_id: "data-eng-framework"
+  topics: ["events.clickstream"]
+  batch_size: 10000
 
 azure:
-  account_name: "mystorageaccount"
+  account_name: "sample-storage-account"
   auth_method: "service_principal"
-  client_id: "<client-id>"
-  client_secret: "<client-secret>"
-  tenant_id: "<tenant-id>"
 
 sink:
-  topics: ["events.clickstream"]
-  delta_table_uri: "abfss://datalake@mystorageaccount.dfs.core.windows.net/bronze/clickstream"
-  batch_size: 10000
-  batch_timeout_seconds: 30
+  delta_table_uri: "abfss://datalake@account.dfs.core.windows.net/bronze/clickstream"
   partition_by: ["event_type"]
-
-schema:
-  - name: "event_id"
-    type: "string"
-  - name: "event_type"
-    type: "string"
-  - name: "payload"
-    type: "string"
 ```
 
-## How It Works
+### JDBC Source (PostgreSQL)
+```yaml
+pipeline_name: jdbc-orders-bronze
+connector_type: jdbc
 
-1. **Consume** — Polls Kafka topics using confluent-kafka
-2. **Deserialize** — Parses JSON (or Avro) messages, enriches with Kafka metadata
-3. **Buffer** — Collects records in memory until batch size or timeout is reached
-4. **Write** — Converts buffer to PyArrow Table and writes to Delta Lake via delta-rs
-5. **Commit** — Commits Kafka offsets only after successful Delta write (at-least-once)
+connector:
+  adapter: postgresql
+  host: "sample-db-host"
+  port: 5432
+  database: "sample-database"
+  user: "sample-user"
+  password: "sample-password"
+  table: "orders"
+  watermark_column: "created_at"
+```
 
-## Documentation
+## Data Quality
 
-- [Configuration Reference](docs/configuration.md)
-- [Authentication Guide](docs/authentication.md)
+Built-in validation framework with configurable rules:
+
+```python
+from data_engineering_framework.processing.quality import QualityValidator, RuleSeverity
+
+validator = QualityValidator()
+validator.add_not_null("customer_id")
+validator.add_unique("order_id", severity=RuleSeverity.ERROR)
+
+results = validator.validate(table)
+if validator.has_errors(results):
+    raise ValueError("Data quality check failed")
+```
+
+## Logging
+
+Centralized logger with Azure Application Insights integration:
+
+```python
+from data_engineering_framework.common.logger import get_logger
+
+logger = get_logger(__name__)
+```
+
+Set `APPLICATIONINSIGHTS_CONNECTION_STRING` environment variable to enable Application Insights.
 
 ## Development
 
@@ -129,8 +200,13 @@ uv run pytest
 
 uv run ruff check src/ tests/
 
-docker-compose up -d kafka azurite
+docker-compose up -d kafka postgresql mysql
 ```
+
+## Documentation
+
+- [Configuration Reference](docs/configuration.md)
+- [Authentication Guide](docs/authentication.md)
 
 ## License
 

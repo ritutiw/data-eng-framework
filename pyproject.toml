@@ -3,16 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "kafka-delta-sink"
+name = "data-engineering-framework"
 version = "0.1.0"
-description = "Stream data from Apache Kafka to Delta Lake on Azure ADLS Gen2 — no Spark required"
+description = "Enterprise-grade lakehouse framework with medallion architecture for multi-source data ingestion, processing, and consumption"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
     { name = "Ritu Kumari", email = "ritutiw@users.noreply.github.com" },
 ]
-keywords = ["kafka", "delta-lake", "adls", "azure", "streaming", "data-engineering"]
+keywords = ["kafka", "delta-lake", "adls", "azure", "streaming", "data-engineering", "pyspark", "jdbc", "medallion"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -29,10 +29,12 @@ dependencies = [
     "pyarrow>=15.0.0",
     "pydantic-settings>=2.0.0",
     "pyyaml>=6.0",
+    "pyspark>=3.5.0",
 ]
 
 [project.optional-dependencies]
 avro = ["confluent-kafka[avro]>=2.3.0"]
+insights = ["opencensus-ext-azure>=1.1.0"]
 dev = [
     "pytest>=8.0",
     "pytest-cov",
@@ -41,7 +43,7 @@ dev = [
 ]
 
 [project.scripts]
-kafka-delta-sink = "kafka_delta_sink.cli:main"
+data-eng-framework = "data_engineering_framework.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/ritutiw/kafka-delta-sink"
@@ -49,7 +51,7 @@ Repository = "https://github.com/ritutiw/kafka-delta-sink"
 Issues = "https://github.com/ritutiw/kafka-delta-sink/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/kafka_delta_sink"]
+packages = ["src/data_engineering_framework"]
 
 [tool.ruff]
 line-length = 100

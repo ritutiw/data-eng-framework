@@ -1,6 +1,6 @@
 """Tests for transform utilities."""
 
-from kafka_delta_sink.transforms import (
+from data_engineering_framework.common.transforms import (
     add_ingestion_metadata,
     flatten_dict,
     rename_fields,

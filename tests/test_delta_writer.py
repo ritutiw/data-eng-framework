@@ -3,7 +3,7 @@
 import pyarrow as pa
 from deltalake import DeltaTable
 
-from kafka_delta_sink.delta_writer import DeltaWriter
+from data_engineering_framework.writers.delta_writer import DeltaWriter
 
 
 class TestDeltaWriter:

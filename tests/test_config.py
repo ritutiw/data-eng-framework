@@ -1,13 +1,18 @@
 """Tests for configuration classes."""
 
-from kafka_delta_sink.config import AzureStorageConfig, KafkaConfig, SinkConfig
+from data_engineering_framework.common.config import (
+    AzureStorageConfig,
+    JDBCConfig,
+    KafkaConfig,
+    SinkConfig,
+)
 
 
 class TestKafkaConfig:
     def test_defaults(self):
         cfg = KafkaConfig()
         assert cfg.bootstrap_servers == "localhost:9092"
-        assert cfg.group_id == "kafka-delta-sink"
+        assert cfg.group_id == "data-eng-framework"
 
     def test_to_confluent_config(self):
         cfg = KafkaConfig(bootstrap_servers="broker:9092", group_id="my-group")
@@ -88,3 +93,17 @@ class TestSinkConfig:
         assert cfg.topics == ["topic-a", "topic-b"]
         assert cfg.batch_size == 5000
         assert cfg.partition_by == ["event_type"]
+
+
+class TestJDBCConfig:
+    def test_defaults(self):
+        cfg = JDBCConfig()
+        assert cfg.dialect == "postgresql"
+        assert cfg.port == 5432
+        assert cfg.fetch_size == 10_000
+
+    def test_to_connector_config(self):
+        cfg = JDBCConfig(host="dbhost", database="mydb", user="u", password="p", table="t")
+        d = cfg.to_connector_config()
+        assert d["host"] == "dbhost"
+        assert d["database"] == "mydb"

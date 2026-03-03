@@ -1,0 +1,31 @@
+pipeline_name: kafka-clickstream-bronze
+connector_type: kafka
+
+connector:
+  bootstrap_servers: "broker:9092"
+  group_id: "data-eng-framework"
+  auto_offset_reset: "earliest"
+  topics: ["events.clickstream"]
+  batch_size: 10000
+  batch_timeout_seconds: 30
+
+azure:
+  account_name: "sample-storage-account"
+  auth_method: "service_principal"
+  client_id: "sample-client-id"
+  client_secret: "sample-client-secret"
+  tenant_id: "sample-tenant-id"
+
+sink:
+  delta_table_uri: "abfss://datalake@sample-storage-account.dfs.core.windows.net/bronze/clickstream"
+  batch_size: 10000
+  partition_by: ["event_type"]
+  write_mode: "append"
+
+schema:
+  - name: "event_id"
+    type: "string"
+  - name: "event_type"
+    type: "string"
+  - name: "payload"
+    type: "string"

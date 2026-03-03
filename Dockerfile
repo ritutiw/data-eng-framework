@@ -6,10 +6,11 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 COPY src/ src/
+COPY config/ config/
 
 RUN uv sync --frozen --no-dev
 
 RUN useradd --create-home appuser
 USER appuser
 
-ENTRYPOINT ["uv", "run", "kafka-delta-sink"]
+ENTRYPOINT ["uv", "run", "data-eng-framework"]
