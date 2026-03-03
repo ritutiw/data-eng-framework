@@ -14,7 +14,7 @@ This framework provides a comprehensive, scalable data engineering solution desi
 Sources → Bronze → Silver → Gold → Platinum
           (Raw)   (Curated) (Business) (AI/ML)
                                 ↓
-                          DuckDB (Analytics)
+                          DatabricksSql (Analytics)
                           Neo4j (Time Series)
 ```
 
@@ -51,7 +51,7 @@ Specialized datasets for advanced analytics:
 - Vector embeddings
 - Real-time scoring tables
 
-### 5. Analytical Storage (DuckDB)
+### 5. Analytical Storage (DatabricksSql)
 High-performance analytical query engine for:
 - Ad-hoc exploration and analysis
 - Fast OLAP workloads
@@ -77,7 +77,7 @@ Comprehensive validation covering completeness, validity, uniqueness, and timeli
 Automatic tracking of historical changes in dimension tables with standard columns for versioning and currency.
 
 ### Specialized Storage Options
-- **DuckDB**: Lightning-fast analytical queries on Gold layer data
+- **DatabricksSql**: Lightning-fast analytical queries on Gold layer data
 - **Neo4j**: Graph-based queries for time series and temporal relationships
 
 ### Monitoring & Observability
@@ -89,7 +89,7 @@ Built-in dashboards, alerts, and data lineage tracking through Unity Catalog.
 - **Processing**: Apache Spark (PySpark), Delta Lake
 - **Governance**: Unity Catalog
 - **Streaming**: Kafka, Azure Event Hub
-- **Analytics**: DuckDB
+- **Analytics**: DatabricksSql
 - **Time Series**: Neo4j
 - **Cloud**: Azure (adaptable to AWS/GCP)
 
@@ -113,7 +113,7 @@ data-engineering-framework/
 - **Real-time Analytics**: Streaming data from Kafka to business dashboards
 - **Regulatory Reporting**: SCD Type 2 for audit trails and historical compliance
 - **AI/ML Pipelines**: Feature engineering and model training datasets
-- **Exploratory Analytics**: DuckDB for fast data science exploration
+- **Exploratory Analytics**: DatabricksSql for fast data science exploration
 - **Temporal Analysis**: Neo4j for understanding time-based patterns and relationships
 
 ## Getting Started
@@ -122,7 +122,7 @@ data-engineering-framework/
 - Azure Databricks (Unity Catalog enabled)
 - Azure Data Factory
 - Azure Key Vault
-- DuckDB installation
+- DatabricksSql installation
 - Neo4j database
 - Service Principal with appropriate permissions
 
@@ -136,7 +136,7 @@ Standard deployment involves configuring YAML files, deploying ADF pipelines, se
 - **Quality**: Built-in validation and monitoring
 - **Performance**: Optimized storage and query patterns
 - **Governance**: Comprehensive lineage and access control
-- **Speed**: DuckDB and Neo4j for specialized query patterns
+- **Speed**: DatabricksSql and Neo4j for specialized query patterns
 
 ## Contributing
 
