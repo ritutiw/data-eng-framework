@@ -1,5 +1,3 @@
-"""Tests for data quality validation."""
-
 import pyarrow as pa
 
 from data_engineering_framework.processing.quality import (

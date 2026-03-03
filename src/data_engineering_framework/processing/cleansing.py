@@ -1,5 +1,3 @@
-"""Data cleansing operations for Silver layer."""
-
 from __future__ import annotations
 
 import pyarrow as pa

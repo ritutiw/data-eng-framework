@@ -1,5 +1,3 @@
-"""Tests for DeltaWriter using local filesystem (no ADLS needed)."""
-
 import pyarrow as pa
 from deltalake import DeltaTable
 

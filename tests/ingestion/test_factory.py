@@ -1,5 +1,3 @@
-"""Tests for ConnectorFactory and ConnectorRegistry."""
-
 import pytest
 
 from data_engineering_framework.ingestion.factory import ConnectorFactory

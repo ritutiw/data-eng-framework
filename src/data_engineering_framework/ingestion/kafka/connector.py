@@ -1,5 +1,3 @@
-"""Kafka connector implementing BaseConnector with Template Method pattern."""
-
 from __future__ import annotations
 
 import signal

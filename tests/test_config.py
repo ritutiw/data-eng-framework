@@ -1,5 +1,3 @@
-"""Tests for configuration classes."""
-
 from data_engineering_framework.common.config import (
     AzureStorageConfig,
     JDBCConfig,

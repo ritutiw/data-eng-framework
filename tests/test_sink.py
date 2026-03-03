@@ -1,5 +1,3 @@
-"""Tests for the KafkaDeltaSink (legacy sink, unit tests with mocks)."""
-
 from unittest.mock import MagicMock, patch
 
 from data_engineering_framework.ingestion.kafka.connector import KafkaConnector

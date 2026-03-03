@@ -1,5 +1,3 @@
-"""Parameterized query builder for JDBC connectors."""
-
 from __future__ import annotations
 
 from data_engineering_framework.ingestion.jdbc.adapters import BaseAdapter

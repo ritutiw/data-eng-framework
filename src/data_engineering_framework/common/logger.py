@@ -1,5 +1,3 @@
-"""Centralized logger with Azure Application Insights integration."""
-
 from __future__ import annotations
 
 import logging

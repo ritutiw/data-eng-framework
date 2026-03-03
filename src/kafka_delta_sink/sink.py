@@ -1,5 +1,3 @@
-"""Core Kafka-to-Delta-Lake sink."""
-
 from __future__ import annotations
 
 import logging

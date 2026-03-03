@@ -1,5 +1,3 @@
-"""Avro message deserializer with Confluent Schema Registry."""
-
 from __future__ import annotations
 
 import logging

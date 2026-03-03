@@ -1,5 +1,3 @@
-"""Aggregation operations for Gold layer."""
-
 from __future__ import annotations
 
 import pyarrow as pa
@@ -11,6 +9,8 @@ logger = get_logger(__name__)
 
 
 class GroupByAggregator(BaseAggregator):
+    """Aggregation operations for Gold layer."""
+
     def __init__(self, group_keys: list[str], aggregations: dict[str, str]):
         self._group_keys = group_keys
         self._aggregations = aggregations

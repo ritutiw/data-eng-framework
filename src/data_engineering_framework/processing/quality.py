@@ -1,5 +1,3 @@
-"""Data quality validation framework for Silver layer."""
-
 from __future__ import annotations
 
 import logging

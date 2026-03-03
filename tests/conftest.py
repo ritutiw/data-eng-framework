@@ -1,5 +1,3 @@
-"""Shared test fixtures."""
-
 import pyarrow as pa
 import pytest
 

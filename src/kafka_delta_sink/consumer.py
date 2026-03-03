@@ -1,5 +1,3 @@
-"""Kafka consumer wrapper."""
-
 from __future__ import annotations
 
 import logging

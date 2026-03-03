@@ -1,5 +1,3 @@
-"""SCD Type 2 tracking for dimension tables."""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone

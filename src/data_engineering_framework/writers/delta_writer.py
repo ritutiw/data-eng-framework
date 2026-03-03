@@ -1,5 +1,3 @@
-"""Delta Lake writer using delta-rs."""
-
 from __future__ import annotations
 
 from typing import Optional

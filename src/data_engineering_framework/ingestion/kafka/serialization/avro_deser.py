@@ -1,5 +1,3 @@
-"""Avro message deserializer with Confluent Schema Registry."""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone

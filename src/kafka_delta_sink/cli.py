@@ -1,5 +1,3 @@
-"""CLI entry point for kafka-delta-sink."""
-
 from __future__ import annotations
 
 import argparse

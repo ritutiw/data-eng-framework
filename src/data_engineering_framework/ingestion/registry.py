@@ -1,5 +1,3 @@
-"""Connector registry using Registry pattern with decorator-based registration."""
-
 from __future__ import annotations
 
 from typing import Type

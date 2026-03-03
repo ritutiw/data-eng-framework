@@ -1,5 +1,3 @@
-"""Azure ADLS Gen2 storage options builder."""
-
 from __future__ import annotations
 
 from kafka_delta_sink.config import AzureStorageConfig

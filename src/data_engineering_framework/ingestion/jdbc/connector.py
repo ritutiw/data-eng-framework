@@ -1,5 +1,3 @@
-"""JDBC connector using PySpark JDBC driver with Adapter strategy pattern."""
-
 from __future__ import annotations
 
 from typing import Iterator

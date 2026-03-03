@@ -1,5 +1,3 @@
-"""Tests for transform utilities."""
-
 from data_engineering_framework.common.transforms import (
     add_ingestion_metadata,
     flatten_dict,

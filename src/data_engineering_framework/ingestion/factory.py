@@ -1,5 +1,3 @@
-"""Connector factory using Factory pattern backed by the registry."""
-
 from __future__ import annotations
 
 from data_engineering_framework.ingestion.base import BaseConnector

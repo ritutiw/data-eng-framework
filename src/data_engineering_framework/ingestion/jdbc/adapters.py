@@ -1,5 +1,3 @@
-"""Database adapter strategies for JDBC connectors (Strategy pattern)."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

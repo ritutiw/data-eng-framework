@@ -1,5 +1,3 @@
-"""Tests for JDBCConnector and adapters."""
-
 import pytest
 
 from data_engineering_framework.ingestion.jdbc.adapters import (

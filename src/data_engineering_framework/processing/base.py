@@ -1,5 +1,3 @@
-"""Abstract base processor for Silver layer transformations."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
