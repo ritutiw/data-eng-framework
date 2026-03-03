@@ -1,0 +1,32 @@
+pipeline_name: full-medallion-pipeline
+connector_type: kafka
+
+connector:
+  bootstrap_servers: "broker:9092"
+  group_id: "medallion-pipeline"
+  auto_offset_reset: "earliest"
+  topics: ["events.transactions"]
+  batch_size: 5000
+  batch_timeout_seconds: 15
+
+azure:
+  account_name: "sample-storage-account"
+  auth_method: "service_principal"
+  client_id: "sample-client-id"
+  client_secret: "sample-client-secret"
+  tenant_id: "sample-tenant-id"
+
+sink:
+  delta_table_uri: "abfss://datalake@sample-storage-account.dfs.core.windows.net/bronze/transactions"
+  write_mode: "append"
+  partition_by: ["transaction_type"]
+
+schema:
+  - name: "transaction_id"
+    type: "string"
+  - name: "transaction_type"
+    type: "string"
+  - name: "amount"
+    type: "float64"
+  - name: "timestamp"
+    type: "timestamp"

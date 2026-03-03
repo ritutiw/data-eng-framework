@@ -1,0 +1,10 @@
+title = "gitleaks config"
+
+[allowlist]
+paths = [
+    '''docker-compose\.yml''',
+    '''docs/authentication\.md''',
+    '''docs/configuration\.md''',
+    '''examples/.*\.py''',
+    '''tests/.*\.py''',
+]

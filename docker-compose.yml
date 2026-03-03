@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,HOST://0.0.0.0:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    hostname: azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0"
+
+  mysql:
+    image: mysql:8.0
+    hostname: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: sample-root-password
+      MYSQL_DATABASE: sample-database
+      MYSQL_USER: sample-user
+      MYSQL_PASSWORD: sample-password
+
+  postgresql:
+    image: postgres:16
+    hostname: postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: sample-database
+      POSTGRES_USER: sample-user
+      POSTGRES_PASSWORD: sample-password
+
+  data-eng-framework:
+    build: .
+    depends_on:
+      - kafka
+      - azurite
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_GROUP_ID: data-eng-framework
+      AZURE_ACCOUNT_NAME: sample-storage-account
+      AZURE_AUTH_METHOD: account_key
+      AZURE_ACCOUNT_KEY: sample-account-key
+      SINK_TOPICS: '["test-events"]'
+      SINK_DELTA_TABLE_URI: az://testcontainer/delta-table
+      SINK_BATCH_SIZE: "100"
+      SINK_BATCH_TIMEOUT_SECONDS: "10"
+    command: ["-c", "config/kafka_sources.yaml", "--log-level", "DEBUG"]

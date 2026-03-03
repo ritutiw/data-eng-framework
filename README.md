@@ -1,12 +1,6 @@
-# data-eng-framework
-
 # Data Engineering Framework
 
 Enterprise-grade lakehouse framework implementing medallion architecture for multi-source data ingestion, processing, and consumption.
-
-## Overview
-
-This framework provides a comprehensive, scalable data engineering solution designed to handle diverse data sources, ensure data quality, and deliver business-ready datasets for analytics and AI/ML use cases.
 
 ## Architecture
 
@@ -18,70 +12,17 @@ Sources → Bronze → Silver → Gold → Platinum
                           Neo4j (Time Series)
 ```
 
-The framework follows a **medallion architecture** with four layers, plus specialized storage for specific workloads.
-
-## Core Components
-
-### 1. Ingestion Layer (Bronze)
-Ingests data from multiple sources into raw format:
-- **SAP Systems**: ECC, S4HANA tables (ACDOCA, BSEG, etc.)
-- **Databases**: SQL Server, Oracle, PostgreSQL via JDBC
-- **APIs**: REST/SOAP endpoints
-- **Event Streams**: Kafka, Azure Event Hub
-- **Files**: CSV, Parquet, JSON, Excel from blob storage
-
-### 2. Processing Layer (Silver)
-Cleanses, validates, and enriches data:
-- **Data Cleansing**: Standardization, deduplication, null handling
-- **Data Quality Framework**: Validation rules, business logic checks, anomaly detection
-- **SCD Type 2**: Automatic historical tracking for dimensions
-- **Delta Lake**: ACID transactions, time travel, change data feed
-
-### 3. Consumption Layer (Gold)
-Business-ready, aggregated data:
-- Dimension tables with historical tracking
-- Pre-aggregated fact tables
-- Materialized views
-- Domain-specific data marts
-
-### 4. AI/ML Layer (Platinum)
-Specialized datasets for advanced analytics:
-- Feature store for ML models
-- Training and inference datasets
-- Vector embeddings
-- Real-time scoring tables
-
-### 5. Analytical Storage (DatabricksSql)
-High-performance analytical query engine for:
-- Ad-hoc exploration and analysis
-- Fast OLAP workloads
-- Data science development
-- Local testing without cluster overhead
-
-### 6. Time Series Storage (Neo4j)
-Graph-based temporal data management for:
-- Time-based relationship analysis
-- Event correlation and pattern detection
-- Audit trail and data lineage tracking
-- Complex temporal queries across entities
-
-## Key Features
-
-### Metadata-Driven Design
-All pipelines and transformations are configured via YAML files, eliminating hardcoded logic and enabling rapid changes.
-
-### Data Quality Framework
-Comprehensive validation covering completeness, validity, uniqueness, and timeliness with automated reporting and alerting.
-
-### SCD Type 2 Management
-Automatic tracking of historical changes in dimension tables with standard columns for versioning and currency.
-
-### Specialized Storage Options
-- **DatabricksSql**: Lightning-fast analytical queries on Gold layer data
-- **Neo4j**: Graph-based queries for time series and temporal relationships
-
-### Monitoring & Observability
-Built-in dashboards, alerts, and data lineage tracking through Unity Catalog.
+```
+┌───────────────┐     ┌──────────────────────────┐     ┌──────────────────────────┐
+│  Kafka Topics │────>│                          │────>│  Delta Lake on ADLS Gen2 │
+└───────────────┘     │  data-eng-framework      │     │  (Bronze / Silver / Gold)│
+┌───────────────┐     │  (PySpark + delta-rs)    │     └──────────────────────────┘
+│  MySQL        │────>│                          │
+│  PostgreSQL   │     │  Design Patterns:        │
+│  OracleDB     │────>│  Factory, Registry,      │
+└───────────────┘     │  Strategy, Template      │
+                      └──────────────────────────┘
+```
 
 ## Technology Stack
 
@@ -97,55 +38,176 @@ Built-in dashboards, alerts, and data lineage tracking through Unity Catalog.
 
 ```
 data-engineering-framework/
-├── config/                       # YAML configurations
-├── ingestion/                    # Source connectors
-├── processing/                   # Silver layer transformations
-├── consumption/                  # Gold layer aggregations
-├── ml/                          # Platinum layer features
-├── orchestration/               # Pipeline definitions
-├── monitoring/                  # Dashboards and alerts
-└── tests/                       # Unit and integration tests
+├── config/                          # YAML configurations
+│   ├── kafka_sources.yaml
+│   ├── jdbc_sources.yaml
+│   └── pipeline.yaml
+├── ingestion/                       # Source connectors (Bronze)
+│   ├── base.py                      # BaseConnector (Template Method)
+│   ├── registry.py                  # ConnectorRegistry (Registry pattern)
+│   ├── factory.py                   # ConnectorFactory (Factory pattern)
+│   ├── kafka/                       # Kafka connector
+│   │   ├── connector.py
+│   │   ├── consumer.py
+│   │   └── serialization/           # JSON + Avro deserializers
+│   └── jdbc/                        # JDBC connectors (PySpark JDBC)
+│       ├── connector.py             # Strategy pattern with adapters
+│       ├── adapters.py              # MySQL, PostgreSQL, Oracle adapters
+│       └── query_builder.py
+├── processing/                      # Silver layer transformations
+│   ├── cleansing.py                 # Dedup, null handling
+│   ├── quality.py                   # Data quality validation
+│   └── scd.py                       # SCD Type 2 tracking
+├── consumption/                     # Gold layer aggregations
+│   └── aggregator.py
+├── ml/                              # Platinum layer
+│   └── feature_store.py
+├── writers/                         # Output writers
+│   └── delta_writer.py              # Delta Lake writer (delta-rs)
+├── orchestration/                   # Pipeline definitions
+│   └── pipeline.py
+├── monitoring/                      # Metrics collection
+│   └── metrics.py
+├── common/                          # Shared utilities
+│   ├── config.py                    # Pydantic settings
+│   ├── logger.py                    # Centralized logger + Application Insights
+│   ├── storage.py                   # Azure ADLS storage helpers
+│   └── transforms.py               # Flatten, rename, select
+└── tests/                           # Unit and integration tests
 ```
 
-## Use Cases
+## Design Patterns
 
-- **Enterprise Data Hub**: Centralized data platform for organization-wide analytics
-- **Real-time Analytics**: Streaming data from Kafka to business dashboards
-- **Regulatory Reporting**: SCD Type 2 for audit trails and historical compliance
-- **AI/ML Pipelines**: Feature engineering and model training datasets
-- **Exploratory Analytics**: DatabricksSql for fast data science exploration
-- **Temporal Analysis**: Neo4j for understanding time-based patterns and relationships
+| Pattern | Location | Purpose |
+|---------|----------|---------|
+| Template Method | `ingestion/base.py` | `connect()` → `extract()` → `close()` lifecycle |
+| Factory | `ingestion/factory.py` | `ConnectorFactory.create("kafka", config)` |
+| Registry | `ingestion/registry.py` | `@ConnectorRegistry.register("kafka")` decorator |
+| Strategy | `ingestion/jdbc/adapters.py` | Pluggable DB adapters (MySQL, PostgreSQL, Oracle) |
 
-## Getting Started
+## Connectors
 
-### Prerequisites
-- Azure Databricks (Unity Catalog enabled)
-- Azure Data Factory
-- Azure Key Vault
-- DatabricksSql installation
-- Neo4j database
-- Service Principal with appropriate permissions
+### Kafka Connector
+Primary ingestion mechanism for streaming data:
+- confluent-kafka consumer with at-least-once delivery
+- JSON and Avro deserialization (Schema Registry)
+- Configurable batching by count or timeout
+- Graceful shutdown with signal handling
 
-### Deployment
-Standard deployment involves configuring YAML files, deploying ADF pipelines, setting up Unity Catalog catalogs/schemas, and initializing specialized storage layers.
+### JDBC Connectors (PySpark JDBC)
+Batch ingestion from relational databases:
+- **MySQL** — `com.mysql.cj.jdbc.Driver`
+- **PostgreSQL** — `org.postgresql.Driver`
+- **OracleDB** — `oracle.jdbc.OracleDriver`
+- Full and incremental loads with watermark columns
+- Parallel reads via partition column
 
-## Benefits
+## Quick Start
 
-- **Scalability**: Handles data from gigabytes to petabytes
-- **Flexibility**: Supports batch and streaming workloads
-- **Quality**: Built-in validation and monitoring
-- **Performance**: Optimized storage and query patterns
-- **Governance**: Comprehensive lineage and access control
-- **Speed**: DatabricksSql and Neo4j for specialized query patterns
+### Install
 
-## Contributing
+```bash
+uv add data-engineering-framework
+```
 
-Follow standard Git workflow with feature branches and pull requests.
+### Run with YAML config
+
+```bash
+data-eng-framework -c config/kafka_sources.yaml
+```
+
+### Run with Docker
+
+```bash
+docker-compose up
+```
+
+## Example Configs
+
+### Kafka Source
+```yaml
+pipeline_name: kafka-clickstream-bronze
+connector_type: kafka
+
+connector:
+  bootstrap_servers: "broker:9092"
+  group_id: "data-eng-framework"
+  topics: ["events.clickstream"]
+  batch_size: 10000
+
+azure:
+  account_name: "sample-storage-account"
+  auth_method: "service_principal"
+
+sink:
+  delta_table_uri: "abfss://datalake@account.dfs.core.windows.net/bronze/clickstream"
+  partition_by: ["event_type"]
+```
+
+### JDBC Source (PostgreSQL)
+```yaml
+pipeline_name: jdbc-orders-bronze
+connector_type: jdbc
+
+connector:
+  adapter: postgresql
+  host: "sample-db-host"
+  port: 5432
+  database: "sample-database"
+  user: "sample-user"
+  password: "sample-password"
+  table: "orders"
+  watermark_column: "created_at"
+```
+
+## Data Quality
+
+Built-in validation framework with configurable rules:
+
+```python
+from data_engineering_framework.processing.quality import QualityValidator, RuleSeverity
+
+validator = QualityValidator()
+validator.add_not_null("customer_id")
+validator.add_unique("order_id", severity=RuleSeverity.ERROR)
+
+results = validator.validate(table)
+if validator.has_errors(results):
+    raise ValueError("Data quality check failed")
+```
+
+## Logging
+
+Centralized logger with Azure Application Insights integration:
+
+```python
+from data_engineering_framework.common.logger import get_logger
+
+logger = get_logger(__name__)
+```
+
+Set `APPLICATIONINSIGHTS_CONNECTION_STRING` environment variable to enable Application Insights.
+
+## Development
+
+```bash
+git clone https://github.com/ritutiw/kafka-delta-sink.git
+cd kafka-delta-sink
+
+uv sync --all-extras
+
+uv run pytest
+
+uv run ruff check src/ tests/
+
+docker-compose up -d kafka postgresql mysql
+```
+
+## Documentation
+
+- [Configuration Reference](docs/configuration.md)
+- [Authentication Guide](docs/authentication.md)
 
 ## License
 
-Proprietary - Internal use only
-
-## Support
-
-Contact the Data Engineering Team for questions, issues, or feature requests.
+Apache License 2.0

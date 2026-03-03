@@ -1,0 +1,12 @@
+from __future__ import annotations
+
+from kafka_delta_sink.config import AzureStorageConfig
+
+
+def build_storage_options(config: AzureStorageConfig) -> dict:
+    return config.to_storage_options()
+
+
+def build_storage_options_from_env() -> dict:
+    config = AzureStorageConfig()
+    return config.to_storage_options()
